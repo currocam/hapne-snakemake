@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import msprime, demes
 import pandas as pd
-import os, subprocess, yaml
+import os, subprocess, yaml, sys
 
 
 def main(demes_file: str, config: str, outdir: str):
@@ -65,9 +65,8 @@ def main(demes_file: str, config: str, outdir: str):
 
 
 if __name__ == "__main__":
-    # TODO: Add argparse to parse the arguments
-    main(
-        demes_file=".test-workflow/constant_small.yaml",
-        config=".test-workflow/standard_params.yaml",
-        outdir="example",
-    )
+    if len(sys.argv) == 4:
+        demes_file = sys.argv[1]
+        config = sys.argv[2]
+        outdir = sys.argv[3]
+        main(demes_file, config, outdir)

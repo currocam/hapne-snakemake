@@ -6,6 +6,5 @@ out_dir: "results/"
 method: "ld"
 # Configuration for the LD method
 maf_threshold: 0.25
-pseudo_diploid: false
 nb_points: 1e6
 apply_filter: false
