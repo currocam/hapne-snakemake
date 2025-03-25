@@ -6,3 +6,5 @@
 logs
 steps
 sandbox
+# Python environments
+__pycache__

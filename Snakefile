@@ -15,7 +15,7 @@ unique_pairs = [f"{x1}_{x2}" for x1, x2 in combinations(names, 2)]
 nb_regions = len(names)
 assert nb_regions * (nb_regions - 1) // 2 == len(unique_pairs)
 if config["method"] == "ld":
-    all_files = expand("steps/{name}.bed", name=names)
+    all_files = expand("steps/{name}.r2", name=names)
 else:
     raise NotImplementedError("Only the 'ld' method is supported")
 
@@ -53,3 +53,19 @@ rule split_vcf:
             --geno 0.8 \
             > {log}
         """
+
+
+rule compute_ld:
+    input:
+        bed="steps/{name}.bed",
+    output:
+        "steps/{name}.r2",
+    params:
+        maf=0.25,
+        pseudo_diploid=False,
+        bin_file=config.get("bin_file"),
+    log:
+        "logs/ld_{name}.log",
+    threads: 1
+    script:
+        "scripts/compute_ld.py"
