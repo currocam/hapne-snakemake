@@ -15,7 +15,7 @@ unique_pairs = [f"{x1}_{x2}" for x1, x2 in combinations(names, 2)]
 nb_regions = len(names)
 assert nb_regions * (nb_regions - 1) // 2 == len(unique_pairs)
 if config["method"] == "ld":
-    all_files = expand("steps/{name}.r2", name=names)
+    all_files = ["steps/hapne.ccld"]
 else:
     raise NotImplementedError("Only the 'ld' method is supported")
 
@@ -69,3 +69,32 @@ rule compute_ld:
     threads: 1
     script:
         "scripts/compute_ld.py"
+
+
+rule compute_ccld_pair:
+    input:
+        bed1="steps/{name1}.bed",
+        bed2="steps/{name2}.bed",
+    output:
+        temp("steps/{name1}_{name2}.r2"),
+    log:
+        "logs/ld_{name1}_{name2}.log",
+    params:
+        maf=config.get("maf", 0.25),
+        pseudo_diploid=config.get("pseudo_diploid", False),
+        nb_points=config.get("nb_points", int(1e6)),
+    threads: 1
+    script:
+        "scripts/compute_ccld.py"
+
+
+rule compute_ccld:
+    input:
+        expand("steps/{name}.r2", name=unique_pairs),
+    output:
+        "steps/hapne.ccld",
+    shell:
+        """
+        echo REGION1, REGION2, CCLD, CCLD_H0, BESSEL_FACTOR, S_CORR > {output}
+        cat {input} >> {output}
+        """
