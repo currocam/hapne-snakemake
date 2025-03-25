@@ -1,0 +1,6 @@
+num_individuals: 100
+num_chromosomes: 10
+sequence_length: 1e7
+mutation_rate: 1e-8
+recombination_rate: 1e-8
+seed: 42

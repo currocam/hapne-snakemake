@@ -1,0 +1,15 @@
+[project]
+authors = ["Curro Campuzano <campuzanocurrogmail.com>"]
+channels = ["conda-forge", "bioconda"]
+description = "Snakemake pipeline to run HapNe with non-model organisms"
+name = "hapne-snakemake"
+platforms = ["osx-arm64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+msprime = ">=1.3.3,<2"
+pandas = ">=2.2.3,<3"
+pyyaml = ">=6.0.2,<7"
+bcftools = ">=1.21,<2"
