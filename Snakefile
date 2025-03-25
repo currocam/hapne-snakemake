@@ -7,6 +7,7 @@ configfile: "config.yaml"
 
 
 data_dir = config["data_dir"]
+out_dir = config["out_dir"]
 # Use glob_wildcards to find all VCF files in the directory
 # This will match files like '/path/to/data/file1.vcf.gz', '/path/to/data/file2.vcf.gz', etc.
 (names,) = glob_wildcards(f"{data_dir}{{name}}.vcf.gz")
@@ -15,7 +16,12 @@ unique_pairs = [f"{x1}_{x2}" for x1, x2 in combinations(names, 2)]
 nb_regions = len(names)
 assert nb_regions * (nb_regions - 1) // 2 == len(unique_pairs)
 if config["method"] == "ld":
-    all_files = ["steps/hapne.ccld", expand("steps/{name}.r2", name=names)]
+    all_files = [
+        f"{out_dir}ld_hapne_estimate.csv",
+        f"{out_dir}ld_hapne_summary.txt",
+        f"{out_dir}ld_hapne_residuals.png",
+        f"{out_dir}ld_hapne_pop_trajectory.png",
+    ]
 else:
     raise NotImplementedError("Only the 'ld' method is supported")
 
@@ -35,7 +41,7 @@ rule split_vcf:
         "steps/{name}.bim",
         "steps/{name}.fam",
     log:
-        "logs/plink_{name}.log",
+        "logs/plink/{name}.log",
     threads: 1
     shadow:
         "minimal"
@@ -65,7 +71,7 @@ rule compute_ld:
         pseudo_diploid=False,
         bin_file=config.get("bin_file"),
     log:
-        "logs/ld_{name}.log",
+        "logs/ld/{name}.log",
     threads: 1
     script:
         "scripts/compute_ld.py"
@@ -78,7 +84,7 @@ rule compute_ccld_pair:
     output:
         temp("steps/{name1}_{name2}.r2"),
     log:
-        "logs/ld_{name1}_{name2}.log",
+        "logs/ld/{name1}_{name2}.log",
     params:
         maf=config.get("maf", 0.25),
         pseudo_diploid=config.get("pseudo_diploid", False),
@@ -98,3 +104,33 @@ rule compute_ccld:
         echo REGION1, REGION2, CCLD, CCLD_H0, BESSEL_FACTOR, S_CORR > {output}
         cat {input} >> {output}
         """
+
+
+rule fit_hapne_ld:
+    input:
+        infiles=expand("steps/{name}.r2", name=names),
+        fam_files=expand("steps/{name}.fam", name=names),
+        bias="steps/hapne.ccld",
+    params:
+        apply_filter=config.get("apply_filter", True),
+        pseudo_diploid=config.get("pseudo_diploid", False),
+        nb_individuals=config.get("nb_individuals"),
+        u_min=config.get("u_min"),
+        u_max=config.get("u_max"),
+        filter_tol=config.get("filter_tol"),
+        sigma2=config.get("sigma2"),
+        u_quantile=config.get("u_quantile"),
+        dt_min=config.get("dt_min"),
+        dt_max=config.get("dt_max"),
+        t_max=config.get("t_max"),
+        nb_parameters=config.get("nb_parameters"),
+        model=config.get("mode"),
+    log:
+        "logs/ld_hapne.log",
+    output:
+        table=f"{out_dir}ld_hapne_estimate.csv",
+        summary=f"{out_dir}ld_hapne_summary.txt",
+        residuals=f"{out_dir}ld_hapne_residuals.png",
+        popsize=f"{out_dir}ld_hapne_pop_trajectory.png",
+    script:
+        "scripts/fit_hapne_ld.py"
