@@ -15,7 +15,7 @@ unique_pairs = [f"{x1}_{x2}" for x1, x2 in combinations(names, 2)]
 nb_regions = len(names)
 assert nb_regions * (nb_regions - 1) // 2 == len(unique_pairs)
 if config["method"] == "ld":
-    all_files = ["steps/hapne.ccld"]
+    all_files = ["steps/hapne.ccld", expand("steps/{name}.r2", name=names)]
 else:
     raise NotImplementedError("Only the 'ld' method is supported")
 
