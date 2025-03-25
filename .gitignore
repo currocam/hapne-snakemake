@@ -1,4 +1,8 @@
-
 # pixi environments
 .pixi
 *.egg-info
+# Snakemaker environments
+.snakemake
+logs
+steps
+sandbox
