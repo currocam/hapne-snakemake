@@ -32,7 +32,7 @@ rule all:
 
 
 # LD-based pipeline
-rule split_vcf:
+rule convert_plink:
     input:
         vcf=f"{data_dir}{{name}}.vcf.gz",
         map=f"{data_dir}{{name}}.map",
