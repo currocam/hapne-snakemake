@@ -35,22 +35,27 @@ def main(demes_file: str, config: str, outdir: str):
             sequence_length=length,
         )
         length_in_cm = length * recombination_rate * 100
-        regions.append({"CHR": chrom_names[index], "FROM_BP": 0, "TO_BP": length, "NAME": "chr", "LENGTH": length_in_cm})
+        regions.append(
+            {
+                "CHR": chrom_names[index],
+                "FROM_BP": 0,
+                "TO_BP": length,
+                "NAME": chrom_names[index],
+                "LENGTH": length_in_cm,
+            }
+        )
         # Write genetic map file in SHAPEIT format
         mapfile = os.path.join(outdir, f"{chrom_names[index]}.shapeit.map")
         with open(mapfile, "w") as gm:
             gm.write("position\tCOMBINED_rate(cM/Mb)\tGenetic_Map(cM)\n")
             gm.write("0\t1.0\t0\n")
-            gm.write(
-                f"{int(length)}\t1.0\t{length_in_cm}\n"
-            )
+            gm.write(f"{int(length)}\t1.0\t{length_in_cm}\n")
         # Write genetic map file in PLINK format
         mapfile = os.path.join(outdir, f"{chrom_names[index]}.plink.map")
         with open(mapfile, "w") as gm:
-            #1  rs100  0  1\n1  rs101  1  1000000
+            # 1  rs100  0  1\n1  rs101  1  1000000
             gm.write(f"{chrom_names[index]} rs100 0 1\n")
             gm.write(f"{chrom_names[index]} rs101 {length_in_cm} {int(length)}\n")
-
 
         mts = msprime.sim_mutations(ts, rate=mutation_rate)
         n_dip_indv = int(mts.num_samples / 2)

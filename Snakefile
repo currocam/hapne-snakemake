@@ -1,7 +1,6 @@
 import pandas as pd
 from itertools import combinations
 
-
 # Configuration of the pipeline
 # configfile: "config.yaml"
 data_dir = config["data_dir"]
@@ -39,6 +38,8 @@ rule convert_plink:
     log:
         "logs/plink/{name}.log",
     threads: 1
+    conda:
+        "conda_environment.yaml"
     shadow:
         "minimal"
     shell:
@@ -68,7 +69,8 @@ rule compute_ld:
         bin_file=config.get("bin_file"),
     log:
         "logs/ld/{name}.log",
-    threads: 1
+    conda:
+        "conda_environment.yaml"
     script:
         "scripts/compute_ld.py"
 
@@ -85,7 +87,8 @@ rule compute_ccld_pair:
         maf=config.get("maf", 0.25),
         pseudo_diploid=config.get("pseudo_diploid", False),
         nb_points=config.get("nb_points", int(1e6)),
-    threads: 1
+    conda:
+        "conda_environment.yaml"
     script:
         "scripts/compute_ccld.py"
 
@@ -121,8 +124,11 @@ rule fit_hapne_ld:
         t_max=config.get("t_max"),
         nb_parameters=config.get("nb_parameters"),
         model=config.get("mode"),
+        nb_bootstraps=config.get("nb_bootstraps"),
     log:
         "logs/ld_hapne.log",
+    conda:
+        "conda_environment.yaml"
     output:
         table=f"{out_dir}ld_hapne_estimate.csv",
         summary=f"{out_dir}ld_hapne_summary.txt",
@@ -164,6 +170,8 @@ rule run_hapibd:
     shadow:
         "minimal"
     threads: 2
+    conda:
+        "conda_environment.yaml"
     params:
         params=config.get("params", ""),
     shell:
@@ -194,7 +202,8 @@ rule post_processing_ibd:
     params:
         gap=config.get("gap", 0.6),  # in cM
         discord=config.get("discord", 1),  # at most one discordant homozygote
-    threads: 1
+    conda:
+        "conda_environment.yaml"
     shell:
         """
         echo "Processing {wildcards.name}" > {log}
@@ -232,6 +241,8 @@ rule build_histogram:
         # From the source code: column_cm_length is set to 8 because it's the
         # index of the column that contains the length of the IBD files
         column_cm_length=8,
+    conda:
+        "conda_environment.yaml"
     shell:
         """
         # Adapted from the source code of HapNe
@@ -253,7 +264,7 @@ rule fit_hapne_ibd:
         residuals=f"{out_dir}ibd_hapne_residuals.png",
         popsize=f"{out_dir}ibd_hapne_pop_trajectory.png",
     log:
-        "logs/ibd.log",
+        "logs/hapne_ibd.log",
     params:
         apply_filter=config.get("apply_filter", True),
         pseudo_diploid=config.get("pseudo_diploid", False),
@@ -267,6 +278,9 @@ rule fit_hapne_ibd:
         dt_max=config.get("dt_max"),
         t_max=config.get("t_max"),
         nb_parameters=config.get("nb_parameters"),
+        nb_bootstraps=config.get("nb_bootstraps"),
         model=config.get("mode"),
+    conda:
+        "conda_environment.yaml"
     script:
         "scripts/fit_hapne_ibd.py"

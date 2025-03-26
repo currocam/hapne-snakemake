@@ -1,0 +1,17 @@
+# This pipeline expects one VCF.gz file per chromosome (e.g. chr1.vcf.gz, chr2.vcf.gz, etc.)
+# and a genetic map file in the *PLINK* format.
+data_dir: "example/"
+out_dir: "results/"
+map_file_suffix: ".plink.map"
+# Either LD or IBD
+method: "ibd"
+# IBD-detection parameters
+hapibd_flags: ""
+# Post-processing parameters
+gap: 0.6 # Maximum gap between two IBD segments to merge them (in cM)
+discord: 1 # at most one discordant homozygote
+# Configuration for the IBD method
+# A TSV file with columns CHR	FROM_BP	TO_BP	NAME	LENGTH
+# It is used to precisely account how likely the length of the IBD segment is
+genome_build: "example/regions.tsv"
+apply_filter: false

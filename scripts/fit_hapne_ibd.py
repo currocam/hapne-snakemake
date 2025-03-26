@@ -73,6 +73,7 @@ def init_data_handler(infiles, sample_size, region_file, params):
     loader.phi2 = np.ones(loader.mu.shape[1])
     loader.adjust_for_count()
     if loader.apply_filter:
+        print("Here")
         loader.apply_ibd_region_filter()
         loader.adjust_for_count()
         logging.info(

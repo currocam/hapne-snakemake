@@ -13,5 +13,5 @@ discord: 1 # at most one discordant homozygote
 # Configuration for the IBD method
 # A TSV file with columns CHR	FROM_BP	TO_BP	NAME	LENGTH
 # It is used to precisely account how likely the length of the IBD segment is
-genome_build: "example/regions.txt"
+genome_build: "example/regions.tsv"
 apply_filter: true
