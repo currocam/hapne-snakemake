@@ -1,4 +1,5 @@
 from external.hapne.backend.HapNe import HapNe, LDLoader, LDModel
+from external.adapter import init_hapne, plot_results
 import pandas as pd
 import matplotlib.pyplot as plt
 import scipy
@@ -17,7 +18,12 @@ def load_data(infiles):
     return np.asarray(cumulated_data).T
 
 
-def get_sample_size(fam_files):
+def get_sample_size(params, fam_files):
+    def lookup(key, default):
+        if params.get(key) is not None:
+            return params[key]
+        return default
+
     pseudo_diploid = lookup("pseudo_diploid", False)
     if not pseudo_diploid:
         logging.warning(
@@ -55,14 +61,19 @@ def genome_split(infiles):
     )
 
 
-def init_loader(infiles, fam_files, bias_filename):
+def init_data_handler(infiles, fam_files, bias_filename, params):
+    def lookup(key, default):
+        if params.get(key) is not None:
+            return params[key]
+        return default
+
     # Skip calling the __init__ method
     loader = LDLoader.__new__(LDLoader)
     loader.genome_split = genome_split(infiles)
     loader.nb_chromosomes = len(infiles)
     loader.u_min = lookup("u_min", loader.get_default_u_min())
     loader.u_max = lookup("u_max", loader.get_default_u_max())
-    loader.sample_size = get_sample_size(fam_files)
+    loader.sample_size = get_sample_size(params, fam_files)
     message = f"Analysing {loader.sample_size} "
     message += "haplotypes"
     logging.info(message)
@@ -126,101 +137,24 @@ def init_loader(infiles, fam_files, bias_filename):
     return loader
 
 
-def init_hapne(infiles, fam_files, bias_file, params):
-    # Skip calling the __init__ method
-    hapne = HapNe.__new__(HapNe)
-    # The object expects a very specific ConfigParser object
-    hapne.config = ConfigParser()
-    hapne.config.add_section("CONFIG")
-    # Iterate over params and add them to the config
-    for key, value in params.items():
-        hapne.config.set("CONFIG", key, str(value))
-    hapne.method = "ld"
-    hapne.io = init_loader(infiles, fam_files, bias_file)
-    hapne.stats_model = LDModel(sigma=hapne.io.sigma)
-    # Parameter related to the model
-    nb_points = 7
-    start = -5
-    if lookup("sigma2", None) is None:
-        hapne.parameter_grid = np.array(
-            [10.0 ** (start + ii) for ii in range(0, nb_points)]
-        )
-    else:
-        logging.info("Using user-provided sigma2")
-        sigma2 = lookup("sigma2", None)
-        hapne.parameter_grid = np.array([sigma2])
-    # This seems to ignore the user default, but it was done in the original code
-    hapne.u_min = hapne.get_default_u_min()
-    hapne.u_quantile = lookup("u_quantile", hapne.u_min)
-    hapne.dt_min = max(0.25, lookup("dt_min", 1))
-    hapne.dt_max = lookup("dt_max", 5000)
-    hapne.t_max = lookup("t_max", 125)
-    hapne.buffer_time = hapne.t_max - 25  # the times averages the deep time effect
-    # Parameters related to the fitting procedure
-    hapne.mode = lookup("mode", "regularised")
-    pseudo_diploid = lookup("pseudo_diploid", False)
-    if hapne.mode == "regularised":
-        default_params = 16 if pseudo_diploid else 21
-    else:
-        default_params = 50
-    hapne.nb_parameters = lookup("nb_parameters", default_params)
-    hapne.random_restarts = 3
-    hapne.eps = 1e-4
-    hapne.ftol = 1e-3
-    hapne.n_min = 1e2
-    hapne.n_max = 1e9
-    hapne.signal_threshold = 6.635 if hapne.method == "ld" else 9.210
-    hapne.nb_bootstraps = lookup("nb_bootstraps", 100)
-    # Initialisations
-    hapne.times = scipy.stats.erlang.ppf(
-        np.linspace(0, 1, hapne.nb_parameters + 1)[:-1],
-        a=2,
-        scale=1.0 / (2 * hapne.u_quantile),
-    )
-    hapne.init_times()
-    return hapne
-
-
-def plot_results(hapne_results, outfile, color="tab:blue"):
-    time = hapne_results["TIME"]
-    xlabel = "Time (gen.)"
-    fig, ax = plt.subplots(figsize=(5, 2.3))
-    ax.plot(time, hapne_results["Q0.5"], color=color, label="")
-    ax.fill_between(
-        time, hapne_results["Q0.25"], hapne_results["Q0.75"], color=color, alpha=0.5
-    )
-    ax.fill_between(
-        time, hapne_results["Q0.025"], hapne_results["Q0.975"], color=color, alpha=0.25
-    )
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel("$N_e$")
-
-    ax.set_yscale("log")
-    ax.spines.right.set_visible(False)
-    ax.spines.top.set_visible(False)
-    plt.savefig(outfile, bbox_inches="tight")
-    plt.close()
-
-
-# Get data from snakemake object
-infiles = snakemake.input.infiles
-fam_files = snakemake.input.fam_files
-bias_filename = snakemake.input.bias
-params = snakemake.params
-
-
-# Global variable with configuration
-def lookup(key, default):
-    if params.get(key) is not None:
-        return params[key]
-    return default
+def init_stats_model(loader):
+    return LDModel(sigma=loader.sigma)
 
 
 with open(snakemake.log[0], "w") as f:
     sys.stderr = sys.stdout = f
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
-    hapne = init_hapne(infiles, fam_files, bias_filename, params)
+
+    method = "ld"
+    infiles = snakemake.input.infiles
+    fam_files = snakemake.input.fam_files
+    bias_filename = snakemake.input.bias
+    params = snakemake.params
+
+    data_handler = init_data_handler(infiles, fam_files, bias_filename, params)
+    stats_model = init_stats_model(data_handler)
+    hapne = init_hapne(method, params, data_handler, stats_model)
     if hapne.mode == "regularised":
         ne_boot = hapne.fit_regularized()
     elif hapne.mode == "fixed":

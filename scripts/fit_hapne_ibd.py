@@ -6,16 +6,21 @@ from pathlib import Path
 from external.adapter import init_hapne, plot_results
 from external.hapne.backend.HapNe import IBDLoader, IBDModel
 
+
 def get_sample_size(vcf_files):
     file = vcf_files[0]
     # Get the number of samples from a vcf.gz file
     # bcftools query -l example/0.vcf.gz | wc -l
-    num_samples = subprocess.check_output(f"bcftools query -l {file} | wc -l", shell=True)
+    num_samples = subprocess.check_output(
+        f"bcftools query -l {file} | wc -l", shell=True
+    )
     return int(num_samples)
+
 
 def read_bins(infiles):
     file = infiles[0]
     return pd.read_csv(file, sep="\t", header=None).values[0:, 0:2].T
+
 
 def genome_split(region_file):
     return pd.read_csv(region_file, sep="\t")
@@ -41,6 +46,7 @@ def init_data_handler(infiles, sample_size, region_file, params):
         if params.get(key) is not None:
             return params[key]
         return default
+
     # Skip calling the __init__ method
     loader = IBDLoader.__new__(IBDLoader)
     # Add super class attributes
@@ -69,16 +75,21 @@ def init_data_handler(infiles, sample_size, region_file, params):
     if loader.apply_filter:
         loader.apply_ibd_region_filter()
         loader.adjust_for_count()
-        logging.info(f"({loader.genome_split.shape[0] - loader.mu.shape[0]} were discarded)")
-    logging.info(f"Last bin considered after filtering out small counts: {loader.bins[-1]}")
+        logging.info(
+            f"({loader.genome_split.shape[0] - loader.mu.shape[0]} were discarded)"
+        )
+    logging.info(
+        f"Last bin considered after filtering out small counts: {loader.bins[-1]}"
+    )
     logging.info(f"Analyzing {loader.mu.shape[0]} regions ")
     data = loader._mu[loader.selected_regions, :]
     mu = compute_poisson_mean(loader.mu, loader.region_length())
-    mu = np.maximum(1. / loader.region_length().sum(), mu)
+    mu = np.maximum(1.0 / loader.region_length().sum(), mu)
     loader.phi2 = np.var((data - mu) / np.sqrt(mu), axis=0, ddof=1)
     logging.info("Assuming all samples originated from the same generation...")
     loader.time_heterogeneity = None
     return loader
+
 
 def init_stats_model(loader, sample_size):
     nb_samples = sample_size

@@ -21,6 +21,7 @@ all_files = [
 ]
 suffix_map = config.get("map_file_suffix", ".map")
 
+
 rule all:
     input:
         all_files,
@@ -140,6 +141,7 @@ rule download_hapibd:
         curl -L -o {output} https://faculty.washington.edu/browning/hap-ibd.jar
         """
 
+
 rule download_merge_ibd:
     output:
         "resources/merge-ibd.jar",
@@ -148,6 +150,7 @@ rule download_merge_ibd:
         curl -L -o {output} https://faculty.washington.edu/browning/refined-ibd/merge-ibd-segments.17Jan20.102.jar
         """
 
+
 rule run_hapibd:
     input:
         vcf=f"{data_dir}{{name}}.vcf.gz",
@@ -155,7 +158,7 @@ rule run_hapibd:
         jar="resources/hap-ibd.jar",
     output:
         "steps/{name}.ibd.gz",
-        "steps/{name}.hbd.gz"
+        "steps/{name}.hbd.gz",
     log:
         "logs/hapibd/{name}.log",
     shadow:
@@ -187,10 +190,10 @@ rule post_processing_ibd:
     log:
         "logs/postprocessing_ibd/{name}.log",
     shadow:
-        "minimal",
+        "minimal"
     params:
-        gap=config.get("gap", 0.6), # in cM
-        discord=config.get("discord", 1), # at most one discordant homozygote
+        gap=config.get("gap", 0.6),  # in cM
+        discord=config.get("discord", 1),  # at most one discordant homozygote
     threads: 1
     shell:
         """
@@ -216,6 +219,7 @@ rule post_processing_ibd:
         rm {log}.ibd_lines {log}.hbd_lines {log}.final_lines
         """
 
+
 rule build_histogram:
     input:
         "steps/{name}.postprocessed.ibd.gz",
@@ -237,16 +241,17 @@ rule build_histogram:
             > {output}
         """
 
+
 rule fit_hapne_ibd:
     input:
         hists=expand("steps/{name}.ibd.hist", name=names),
-        genome_build = config.get("genome_build", ""),
-        vcfs = expand(f"{data_dir}{{name}}.vcf.gz", name=names),
+        genome_build=config.get("genome_build", ""),
+        vcfs=expand(f"{data_dir}{{name}}.vcf.gz", name=names),
     output:
-        table = f"{out_dir}ibd_hapne_estimate.csv",
-        summary = f"{out_dir}ibd_hapne_summary.txt",
-        residuals =f"{out_dir}ibd_hapne_residuals.png",
-        popsize = f"{out_dir}ibd_hapne_pop_trajectory.png",
+        table=f"{out_dir}ibd_hapne_estimate.csv",
+        summary=f"{out_dir}ibd_hapne_summary.txt",
+        residuals=f"{out_dir}ibd_hapne_residuals.png",
+        popsize=f"{out_dir}ibd_hapne_pop_trajectory.png",
     log:
         "logs/ibd.log",
     params:
@@ -263,4 +268,5 @@ rule fit_hapne_ibd:
         t_max=config.get("t_max"),
         nb_parameters=config.get("nb_parameters"),
         model=config.get("mode"),
-    script: "scripts/fit_hapne_ibd.py"
+    script:
+        "scripts/fit_hapne_ibd.py"

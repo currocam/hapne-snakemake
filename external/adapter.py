@@ -5,11 +5,13 @@ from configparser import ConfigParser
 import logging
 import matplotlib.pyplot as plt
 
+
 def init_hapne(method, params, data_handler, stats_model):
     def lookup(key, default):
         if params.get(key) is not None:
             return params[key]
         return default
+
     # Skip calling the __init__ method
     hapne = HapNe.__new__(HapNe)
     # The object expects a very specific ConfigParser object
@@ -75,6 +77,7 @@ def init_hapne(method, params, data_handler, stats_model):
     )
     hapne.init_times()
     return hapne
+
 
 def plot_results(hapne_results, outfile, color="tab:blue"):
     time = hapne_results["TIME"]
