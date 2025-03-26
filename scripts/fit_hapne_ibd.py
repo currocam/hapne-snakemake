@@ -1,4 +1,4 @@
-import sys, tempfile, os, logging
+import sys, tempfile, os, logging, shutil
 import subprocess
 import numpy as np
 import pandas as pd
@@ -125,9 +125,10 @@ with open(snakemake.log[0], "w") as f:
         temp_folder = Path(temp_folder)
         hapne.config.set("CONFIG", "output_folder", str(temp_folder))
         hapne.save_hapne(ne_boot, temp_folder)
-        os.rename(temp_folder / "hapne.csv", snakemake.output.table)
+        shutil.copy(temp_folder / "hapne.csv", snakemake.output.table)
         hapne.plot_goodness_of_fit(np.median(ne_boot, axis=0), temp_folder)
-        os.rename(temp_folder / "residuals.png", snakemake.output.residuals)
+        shutil.copy(temp_folder / "residuals.png", snakemake.output.residuals)
+
     with open(str(snakemake.output.summary), "w") as f:
         f.write(hapne.io.summary_message)
     hapne_results = pd.read_csv(snakemake.output.table)
