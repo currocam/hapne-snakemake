@@ -1,7 +1,8 @@
 # This pipeline expects one VCF.gz file per chromosome (e.g. chr1.vcf.gz, chr2.vcf.gz, etc.)
-# and a genetic map file in the SHAPEIT format.
+# and a genetic map file in the *SHAPEIT* format.
 data_dir: "example/"
 out_dir: "results/"
+map_file_suffix: ".shapeit.map"
 # Either LD or IBD
 method: "ld"
 # Configuration for the LD method

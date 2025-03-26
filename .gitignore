@@ -4,6 +4,7 @@
 # Snakemaker environments
 .snakemake
 logs
+resources
 steps
 sandbox
 results
