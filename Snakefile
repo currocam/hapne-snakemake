@@ -51,6 +51,7 @@ rule convert_plink:
             --out steps/{wildcards.name} \
             --threads {threads} \
             --memory 2048 \
+            --allow-extra-chr \
             --maf 0.249 \
             --snps-only \
             --geno 0.8 \
