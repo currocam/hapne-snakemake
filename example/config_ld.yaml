@@ -1,5 +1,4 @@
-# This pipeline expects one VCF.gz file per chromosome (e.g. chr1.vcf.gz, chr2.vcf.gz, etc.)
-# and a genetic map file in the *SHAPEIT* format.
+# This pipeline expects one VCF.gz file per chromosome (e.g., chr1.vcf.gz, chr2.vcf.gz, etc.) and a genetic map file in the *SHAPEIT* format.
 data_dir: "example/"
 out_dir: "results/"
 map_file_suffix: ".shapeit.map"
@@ -9,3 +8,8 @@ method: "ld"
 maf_threshold: 0.25
 nb_points: 1e6
 apply_filter: false
+# There are many flags in the pipeline with reasonable defaults.
+# You can consult the Snakefile for a complete list. 
+# If you need to pass additional flags to plink (for example, to define a chromosome set)
+# you can pass them as follows:
+# plink_extra_flags: "-chr-set 50 no-xy no-mt"

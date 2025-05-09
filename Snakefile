@@ -40,6 +40,8 @@ rule convert_plink:
     threads: 1
     conda:
         "conda_environment.yaml"
+    params:
+        extra=config.get("plink_extra_flags", ""),
     shadow:
         "minimal"
     shell:
@@ -50,6 +52,7 @@ rule convert_plink:
             --cm-map {input.map} {wildcards.name} \
             --out steps/{wildcards.name} \
             --threads {threads} \
+            {params.extra} \
             --memory 2048 \
             --allow-extra-chr \
             --maf 0.249 \
@@ -174,13 +177,13 @@ rule run_hapibd:
     conda:
         "conda_environment.yaml"
     params:
-        params=config.get("params", ""),
+        extra=config.get("params", ""),
     shell:
         """
         # java -jar hap-ibd.jar gt=$file map=plink.chr$CHR.GRCh38.map  out=IBD/$PREFIX
         java -jar {input.jar} \
             gt={input.vcf} map={input.map} out=steps/{wildcards.name} \
-            nthreads={threads} {params} &> /dev/null
+            nthreads={threads} {params.extra} &> /dev/null
         mv steps/{wildcards.name}.log {log}
         """
 
