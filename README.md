@@ -20,7 +20,7 @@ snakemake --use-conda -c4 --configfile example/config_ibd.yaml
 To install the workflow, clone the repository and install the required packages:
 
 ```bash
-mamba create -n hapne-snakemake -f conda_environment.yaml
+mamba env create -n hapne-snakemake -f conda_environment.yaml
 conda activate hapne-snakemake
 ```
 
